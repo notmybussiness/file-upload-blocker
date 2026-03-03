@@ -5,8 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -29,6 +31,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     ResponseEntity<ApiErrorResponse> handleConstraintViolationException(ConstraintViolationException exception) {
         return ResponseEntity.badRequest().body(new ApiErrorResponse("VALIDATION_ERROR", exception.getMessage()));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    ResponseEntity<ApiErrorResponse> handleMissingServletRequestPartException(MissingServletRequestPartException exception) {
+        return ResponseEntity.badRequest().body(new ApiErrorResponse("VALIDATION_ERROR", exception.getRequestPartName() + " is required"));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    ResponseEntity<ApiErrorResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException exception) {
+        return ResponseEntity.badRequest().body(new ApiErrorResponse("VALIDATION_ERROR", exception.getParameterName() + " is required"));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
