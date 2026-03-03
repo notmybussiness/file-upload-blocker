@@ -1,0 +1,21 @@
+{
+  "name": "extension-blocker",
+  "version": "1.0.0",
+  "description": "과제 목적에 맞춘 최소 구현(MVP)입니다. 정책 관리(Admin)와 업로드/다운로드(Client)를 분리했고, 과한 확장 설계는 의도적으로 제외했습니다.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.3.3"
+  }
+}
