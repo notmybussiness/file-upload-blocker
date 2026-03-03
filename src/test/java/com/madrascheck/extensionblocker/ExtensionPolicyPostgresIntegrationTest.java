@@ -51,7 +51,7 @@ class ExtensionPolicyPostgresIntegrationTest {
 
     @Test
     void fixedExtensionStateShouldPersistAfterPatch() throws Exception {
-        mockMvc.perform(patch("/api/v1/extensions/fixed/exe")
+        mockMvc.perform(patch("/api/v1/admin/extensions/fixed/exe")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"checked\":true}"))
                 .andExpect(status().isOk())
@@ -63,13 +63,13 @@ class ExtensionPolicyPostgresIntegrationTest {
 
     @Test
     void customExtensionShouldBeVisibleAfterAdd() throws Exception {
-        mockMvc.perform(post("/api/v1/extensions/custom")
+        mockMvc.perform(post("/api/v1/admin/extensions/custom")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"sh\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("sh"));
 
-        mockMvc.perform(get("/api/v1/extensions/policy"))
+        mockMvc.perform(get("/api/v1/admin/extensions/policy"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.custom.items[0].name").value("sh"))
                 .andExpect(jsonPath("$.custom.count").value(1));
@@ -77,7 +77,7 @@ class ExtensionPolicyPostgresIntegrationTest {
 
     @Test
     void customExtensionShouldBeRemovedAfterDelete() throws Exception {
-        String body = mockMvc.perform(post("/api/v1/extensions/custom")
+        String body = mockMvc.perform(post("/api/v1/admin/extensions/custom")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"sh\"}"))
                 .andExpect(status().isCreated())
@@ -89,10 +89,10 @@ class ExtensionPolicyPostgresIntegrationTest {
         assertThat(matcher.find()).isTrue();
         long id = Long.parseLong(matcher.group(1));
 
-        mockMvc.perform(delete("/api/v1/extensions/custom/" + id))
+        mockMvc.perform(delete("/api/v1/admin/extensions/custom/" + id))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/extensions/policy"))
+        mockMvc.perform(get("/api/v1/admin/extensions/policy"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.custom.count").value(0));
     }

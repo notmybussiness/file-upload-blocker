@@ -1,5 +1,6 @@
 package com.madrascheck.extensionblocker.file.api;
 
+import com.madrascheck.extensionblocker.client.api.ClientFileController;
 import com.madrascheck.extensionblocker.common.error.GlobalExceptionHandler;
 import com.madrascheck.extensionblocker.common.error.ResourceNotFoundException;
 import com.madrascheck.extensionblocker.common.error.ValidationException;
@@ -11,16 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockMultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = FileController.class)
+@WebMvcTest(controllers = ClientFileController.class)
 @Import(GlobalExceptionHandler.class)
 class FileControllerTest {
 
@@ -40,7 +40,7 @@ class FileControllerTest {
 
     @Test
     void uploadShouldReturnBadRequestWhenFileMissing() throws Exception {
-        mockMvc.perform(multipart("/api/v1/files"))
+        mockMvc.perform(multipart("/api/v1/client/files"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("file is required"));
@@ -51,7 +51,7 @@ class FileControllerTest {
         when(fileService.upload(any())).thenThrow(new ValidationException("file extension is blocked: exe"));
         MockMultipartFile file = new MockMultipartFile("file", "virus.exe", "application/octet-stream", "abc".getBytes());
 
-        mockMvc.perform(multipart("/api/v1/files").file(file))
+        mockMvc.perform(multipart("/api/v1/client/files").file(file))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
@@ -69,7 +69,7 @@ class FileControllerTest {
         when(fileService.upload(any())).thenReturn(response);
         MockMultipartFile file = new MockMultipartFile("file", "sample.pdf", "application/pdf", "abc".getBytes());
 
-        mockMvc.perform(multipart("/api/v1/files").file(file))
+        mockMvc.perform(multipart("/api/v1/client/files").file(file))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.originalName").value("sample.pdf"))
                 .andExpect(jsonPath("$.extension").value("pdf"));
@@ -88,7 +88,7 @@ class FileControllerTest {
                 )
         ));
 
-        mockMvc.perform(get("/api/v1/files"))
+        mockMvc.perform(get("/api/v1/client/files"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].originalName").value("sample.pdf"));
     }
@@ -98,7 +98,7 @@ class FileControllerTest {
         UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
         when(fileService.download(id)).thenReturn(new DownloadedFile("sample.pdf", "application/pdf", "abc".getBytes()));
 
-        mockMvc.perform(get("/api/v1/files/" + id + "/download"))
+        mockMvc.perform(get("/api/v1/client/files/" + id + "/download"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename*=UTF-8''sample.pdf"))
                 .andExpect(header().string("Content-Type", "application/pdf"));
@@ -109,7 +109,7 @@ class FileControllerTest {
         UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
         when(fileService.download(id)).thenThrow(new ResourceNotFoundException("uploaded file not found: id=" + id));
 
-        mockMvc.perform(get("/api/v1/files/" + id + "/download"))
+        mockMvc.perform(get("/api/v1/client/files/" + id + "/download"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }

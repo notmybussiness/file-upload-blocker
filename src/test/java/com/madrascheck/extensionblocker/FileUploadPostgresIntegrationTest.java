@@ -78,14 +78,14 @@ class FileUploadPostgresIntegrationTest {
     void uploadListAndDownloadShouldWork() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "sample.txt", "text/plain", "hello".getBytes());
 
-        String uploadResponse = mockMvc.perform(multipart("/api/v1/files").file(file))
+        String uploadResponse = mockMvc.perform(multipart("/api/v1/client/files").file(file))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.originalName").value("sample.txt"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        mockMvc.perform(get("/api/v1/files"))
+        mockMvc.perform(get("/api/v1/client/files"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].originalName").value("sample.txt"))
                 .andExpect(jsonPath("$[0].extension").value("txt"));
@@ -94,7 +94,7 @@ class FileUploadPostgresIntegrationTest {
         assertThat(matcher.find()).isTrue();
         String id = matcher.group(1);
 
-        mockMvc.perform(get("/api/v1/files/" + id + "/download"))
+        mockMvc.perform(get("/api/v1/client/files/" + id + "/download"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename*=UTF-8''sample.txt"))
                 .andExpect(header().string("Content-Type", MediaType.TEXT_PLAIN_VALUE));
@@ -102,14 +102,14 @@ class FileUploadPostgresIntegrationTest {
 
     @Test
     void uploadShouldBeRejectedWhenFixedExtensionIsBlocked() throws Exception {
-        mockMvc.perform(patch("/api/v1/extensions/fixed/exe")
+        mockMvc.perform(patch("/api/v1/admin/extensions/fixed/exe")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"checked\":true}"))
                 .andExpect(status().isOk());
 
         MockMultipartFile blockedFile = new MockMultipartFile("file", "virus.exe", "application/octet-stream", "abc".getBytes());
 
-        mockMvc.perform(multipart("/api/v1/files").file(blockedFile))
+        mockMvc.perform(multipart("/api/v1/client/files").file(blockedFile))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("file extension is blocked: exe"));
@@ -117,14 +117,14 @@ class FileUploadPostgresIntegrationTest {
 
     @Test
     void uploadShouldBeRejectedWhenCustomExtensionIsBlocked() throws Exception {
-        mockMvc.perform(post("/api/v1/extensions/custom")
+        mockMvc.perform(post("/api/v1/admin/extensions/custom")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"sh\"}"))
                 .andExpect(status().isCreated());
 
         MockMultipartFile blockedFile = new MockMultipartFile("file", "deploy.sh", "application/octet-stream", "abc".getBytes());
 
-        mockMvc.perform(multipart("/api/v1/files").file(blockedFile))
+        mockMvc.perform(multipart("/api/v1/client/files").file(blockedFile))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("file extension is blocked: sh"));

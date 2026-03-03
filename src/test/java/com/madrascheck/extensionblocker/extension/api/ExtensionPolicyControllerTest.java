@@ -1,5 +1,6 @@
 package com.madrascheck.extensionblocker.extension.api;
 
+import com.madrascheck.extensionblocker.admin.api.AdminExtensionPolicyController;
 import com.madrascheck.extensionblocker.common.error.GlobalExceptionHandler;
 import com.madrascheck.extensionblocker.common.error.ValidationException;
 import com.madrascheck.extensionblocker.extension.dto.PolicyResponse;
@@ -27,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = ExtensionPolicyController.class)
+@WebMvcTest(controllers = AdminExtensionPolicyController.class)
 @Import(GlobalExceptionHandler.class)
 class ExtensionPolicyControllerTest {
 
@@ -45,7 +46,7 @@ class ExtensionPolicyControllerTest {
         );
         when(extensionPolicyService.getPolicy()).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/extensions/policy"))
+        mockMvc.perform(get("/api/v1/admin/extensions/policy"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fixed[0].name").value("exe"))
                 .andExpect(jsonPath("$.custom.count").value(1));
@@ -56,7 +57,7 @@ class ExtensionPolicyControllerTest {
         when(extensionPolicyService.updateFixedExtension(anyString(), anyBoolean()))
                 .thenReturn(new PolicyResponse.FixedExtensionItem("exe", true));
 
-        mockMvc.perform(patch("/api/v1/extensions/fixed/exe")
+        mockMvc.perform(patch("/api/v1/admin/extensions/fixed/exe")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"checked\":true}"))
                 .andExpect(status().isOk())
@@ -69,7 +70,7 @@ class ExtensionPolicyControllerTest {
         when(extensionPolicyService.addCustomExtension(anyString()))
                 .thenReturn(new PolicyResponse.CustomExtensionItem(10L, "sh"));
 
-        mockMvc.perform(post("/api/v1/extensions/custom")
+        mockMvc.perform(post("/api/v1/admin/extensions/custom")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"sh\"}"))
                 .andExpect(status().isCreated())
@@ -81,7 +82,7 @@ class ExtensionPolicyControllerTest {
     void deleteCustomShouldReturnNoContent() throws Exception {
         doNothing().when(extensionPolicyService).deleteCustomExtension(anyLong());
 
-        mockMvc.perform(delete("/api/v1/extensions/custom/10"))
+        mockMvc.perform(delete("/api/v1/admin/extensions/custom/10"))
                 .andExpect(status().isNoContent());
     }
 
@@ -91,7 +92,7 @@ class ExtensionPolicyControllerTest {
                 .when(extensionPolicyService)
                 .addCustomExtension(anyString());
 
-        mockMvc.perform(post("/api/v1/extensions/custom")
+        mockMvc.perform(post("/api/v1/admin/extensions/custom")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"sh\"}"))
                 .andExpect(status().isBadRequest())
