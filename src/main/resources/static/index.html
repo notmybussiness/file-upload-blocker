@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>파일 확장자 차단</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div class="container">
+    <h1>파일 확장자 차단</h1>
+    <p class="description">파일 확장자에 따라 특정 형식의 파일을 첨부하거나 전송하지 못하도록 제한</p>
+
+    <section class="section">
+        <h2>고정 확장자</h2>
+        <div id="fixed-extensions" class="fixed-list"></div>
+    </section>
+
+    <section class="section">
+        <h2>커스텀 확장자</h2>
+        <div class="custom-input-row">
+            <input id="custom-input" type="text" maxlength="20" placeholder="확장자 입력" />
+            <button id="add-custom-btn" type="button">+추가</button>
+        </div>
+        <div id="custom-count" class="count">0/200</div>
+        <div id="custom-tags" class="tags"></div>
+    </section>
+
+    <p id="error-message" class="error"></p>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
