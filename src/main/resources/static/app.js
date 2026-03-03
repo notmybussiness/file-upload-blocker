@@ -4,6 +4,10 @@ const addButton = document.getElementById('add-custom-btn');
 const customCount = document.getElementById('custom-count');
 const customTags = document.getElementById('custom-tags');
 const errorMessage = document.getElementById('error-message');
+const uploadInput = document.getElementById('upload-file-input');
+const uploadButton = document.getElementById('upload-btn');
+const uploadResult = document.getElementById('upload-result');
+const fileList = document.getElementById('file-list');
 
 async function fetchJson(url, options = {}) {
     const response = await fetch(url, {
@@ -32,8 +36,35 @@ async function fetchJson(url, options = {}) {
     return response.json();
 }
 
+async function uploadFile(url, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        let message = 'upload failed';
+        try {
+            const error = await response.json();
+            message = error.message || message;
+        } catch (e) {
+            // no-op
+        }
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
 function setError(message) {
     errorMessage.textContent = message || '';
+}
+
+function setUploadResult(message) {
+    uploadResult.textContent = message || '';
 }
 
 function renderPolicy(policy) {
@@ -99,9 +130,37 @@ function renderPolicy(policy) {
     }
 }
 
+function renderFiles(files) {
+    fileList.innerHTML = '';
+
+    if (files.length === 0) {
+        const empty = document.createElement('tr');
+        empty.innerHTML = '<td class="empty" colspan="5">업로드된 파일이 없습니다.</td>';
+        fileList.appendChild(empty);
+        return;
+    }
+
+    for (const file of files) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${file.originalName}</td>
+            <td>${file.extension || '-'}</td>
+            <td>${file.sizeBytes}</td>
+            <td>${file.createdAt}</td>
+            <td><a href="/api/v1/files/${file.id}/download">다운로드</a></td>
+        `;
+        fileList.appendChild(row);
+    }
+}
+
 async function loadPolicy() {
     const policy = await fetchJson('/api/v1/extensions/policy');
     renderPolicy(policy);
+}
+
+async function loadFiles() {
+    const files = await fetchJson('/api/v1/files');
+    renderFiles(files);
 }
 
 addButton.addEventListener('click', async () => {
@@ -118,6 +177,24 @@ addButton.addEventListener('click', async () => {
     }
 });
 
+uploadButton.addEventListener('click', async () => {
+    try {
+        setError('');
+        setUploadResult('');
+
+        if (!uploadInput.files || uploadInput.files.length === 0) {
+            throw new Error('file is required');
+        }
+
+        const uploaded = await uploadFile('/api/v1/files', uploadInput.files[0]);
+        setUploadResult(`업로드 성공: ${uploaded.originalName}`);
+        uploadInput.value = '';
+        await loadFiles();
+    } catch (error) {
+        setError(error.message);
+    }
+});
+
 customInput.addEventListener('keydown', async (event) => {
     if (event.key === 'Enter') {
         event.preventDefault();
@@ -125,6 +202,6 @@ customInput.addEventListener('keydown', async (event) => {
     }
 });
 
-loadPolicy().catch((error) => {
+Promise.all([loadPolicy(), loadFiles()]).catch((error) => {
     setError(error.message);
 });

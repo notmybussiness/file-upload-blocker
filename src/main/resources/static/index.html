@@ -26,6 +26,31 @@
         <div id="custom-tags" class="tags"></div>
     </section>
 
+    <section class="section">
+        <h2>파일 업로드</h2>
+        <div class="upload-row">
+            <input id="upload-file-input" type="file" />
+            <button id="upload-btn" type="button">업로드</button>
+        </div>
+        <p id="upload-result" class="upload-result"></p>
+    </section>
+
+    <section class="section">
+        <h2>업로드 파일 목록</h2>
+        <table class="file-table">
+            <thead>
+            <tr>
+                <th>파일명</th>
+                <th>확장자</th>
+                <th>크기(bytes)</th>
+                <th>업로드시각</th>
+                <th>다운로드</th>
+            </tr>
+            </thead>
+            <tbody id="file-list"></tbody>
+        </table>
+    </section>
+
     <p id="error-message" class="error"></p>
 </div>
 <script src="/app.js"></script>

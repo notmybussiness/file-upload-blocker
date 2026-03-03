@@ -10,7 +10,7 @@ body {
 }
 
 .container {
-    max-width: 720px;
+    max-width: 900px;
     margin: 32px auto;
     padding: 24px;
     background: #fff;
@@ -48,21 +48,24 @@ h1 {
     gap: 6px;
 }
 
-.custom-input-row {
+.custom-input-row,
+.upload-row {
     display: flex;
     gap: 8px;
     margin-bottom: 10px;
 }
 
-.custom-input-row input {
+.custom-input-row input,
+.upload-row input {
     flex: 1;
     height: 36px;
     padding: 0 10px;
     border: 1px solid #bbb;
 }
 
-.custom-input-row button {
-    width: 84px;
+.custom-input-row button,
+.upload-row button {
+    width: 100px;
     border: 1px solid #bbb;
     background: #f0f0f0;
     cursor: pointer;
@@ -74,7 +77,7 @@ h1 {
 }
 
 .tags {
-    min-height: 160px;
+    min-height: 120px;
     border: 1px solid #ccc;
     padding: 10px;
     display: flex;
@@ -98,6 +101,40 @@ h1 {
     background: transparent;
     cursor: pointer;
     font-size: 15px;
+}
+
+.upload-result {
+    min-height: 20px;
+    margin: 0;
+    color: #1a73e8;
+    font-size: 14px;
+}
+
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.file-table th,
+.file-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.file-table thead {
+    background: #f3f3f3;
+}
+
+.file-table a {
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.file-table .empty {
+    text-align: center;
+    color: #666;
 }
 
 .error {
