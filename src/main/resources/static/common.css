@@ -1,0 +1,54 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Malgun Gothic', sans-serif;
+    background-color: #f8f8f8;
+    color: #222;
+}
+
+.container {
+    max-width: 900px;
+    margin: 32px auto;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+h1 {
+    margin: 0 0 12px;
+    font-size: 42px;
+}
+
+.description {
+    margin: 0 0 24px;
+    font-size: 18px;
+}
+
+.section {
+    margin-bottom: 24px;
+}
+
+.section h2 {
+    margin: 0 0 12px;
+    font-size: 36px;
+}
+
+.error {
+    min-height: 20px;
+    color: #d93025;
+    font-size: 14px;
+    margin: 0;
+}
+
+button {
+    border: 1px solid #bbb;
+    background: #f0f0f0;
+    cursor: pointer;
+}
+
+input {
+    border: 1px solid #bbb;
+}
