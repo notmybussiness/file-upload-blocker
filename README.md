@@ -106,3 +106,14 @@ AWS_REGION=ap-northeast-2 \
 - 감사 로그/모니터링 고도화
 
 자세한 메모는 `docs/assignment-notes.md` 참고.
+
+## Git 커밋 워크플로우 표준
+- 표준 문서: `docs/workflow/git-commit-standard.md`
+- 기준선 스냅샷: `docs/workflow/current-baseline.md`
+- PR 체크리스트 템플릿: `.github/PULL_REQUEST_TEMPLATE.md`
+- 커밋 메시지 템플릿: `.gitmessage`
+
+로컬 git에 커밋 템플릿을 연결하려면:
+```bash
+git config commit.template .gitmessage
+```
