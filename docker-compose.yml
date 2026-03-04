@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: extension-blocker-app:latest
+    container_name: extension-blocker-app
+    ports:
+      - "80:8080" # 외부 HTTP 포트를 컨테이너 서버 포트로 매핑 (VM IP로 바로 접속 가능하도록)
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # JDBC URL의 'db' 부분은 아래 정의한 postgres 컨테이너의 서비스 이름과 동일하여 통신 가능합니다.
+      # DB 계정 및 외부 스토리지 GCP 설정 파일 바인딩
+    env_file:
+      - ./src/main/resources/application-secret.yml
+    volumes:
+      # 로컬에 다운받은 GCP Key 파일을 컨테이너 내부에 주입하여 인증시킬 경로
+      - ./gcp-credentials.json:/etc/secrets/gcp-credentials.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    container_name: extension-blocker-db
+    environment:
+      # 비밀번호는 application-secret.yml에 있는 값과 동일해야 합니다. (수동 설정 권장)
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=REALLY_SECURE_PASSWORD_HERE
+      - POSTGRES_DB=extension_blocker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d extension_blocker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  pgdata:
