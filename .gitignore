@@ -41,3 +41,13 @@ out/
 node_modules/
 playwright-report/
 test-results/
+
+### Security & Configs ###
+.env
+*.pem
+*secret*.yml
+application-*.properties
+application-*.yml
+!application-*.properties.template
+!application-*.yml.template
+!application-prod.yml

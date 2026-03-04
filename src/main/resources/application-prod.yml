@@ -1,0 +1,23 @@
+spring:
+  config:
+    import: optional:file:./src/main/resources/application-secret.yml
+  datasource:
+    # URL, Username, Password는 application-secret.yml에서 덮어씁니다.
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+# 스토리지 방식을 GCP(S3 호환)로 설정
+app:
+  storage:
+    type: gcp
+
+# GCP 접속 정보 세팅
+cloud:
+  gcp:
+    storage:
+      bucket: ${GCP_BUCKET_NAME:extension-blocker-storage}
+      endpoint: https://storage.googleapis.com
+      region: us-east1
