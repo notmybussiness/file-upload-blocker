@@ -1,50 +1,47 @@
 package com.madrascheck.extensionblocker.file.storage;
 
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.madrascheck.extensionblocker.common.error.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.net.URI;
-
+/**
+ * Google Cloud Storage 네이티브 구현체.
+ * 인증: GOOGLE_APPLICATION_CREDENTIALS 환경변수로 서비스 계정 JSON 키 경로를 지정하면 자동 인증됩니다.
+ */
 @Component
 @ConditionalOnProperty(name = "app.storage.type", havingValue = "gcp")
 public class GcpCloudStorageService implements FileObjectStorage {
 
-    private final S3Client s3Client;
+    private final Storage storage;
     private final String bucketName;
 
     public GcpCloudStorageService(
             @Value("${cloud.gcp.storage.bucket}") String bucketName,
-            @Value("${cloud.gcp.storage.endpoint:https://storage.googleapis.com}") String endpoint,
-            @Value("${cloud.gcp.storage.region:us-east1}") String region) {
+            @Value("${cloud.gcp.storage.project-id:}") String projectId) {
 
         this.bucketName = bucketName;
-        // GCS는 S3 API와 호환되므로, HMAC Keys가 시스템 환경변수(AWS_ACCESS_KEY_ID 등)로
-        // 주입되면 AWS SDK를 통해 GCS와 통신할 수 있습니다.
-        this.s3Client = S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(software.amazon.awssdk.regions.Region.of(region))
-                .build();
+
+        StorageOptions.Builder builder = StorageOptions.newBuilder();
+        if (projectId != null && !projectId.isBlank()) {
+            builder.setProjectId(projectId);
+        }
+        this.storage = builder.build().getService();
     }
 
     @Override
     public void put(String key, byte[] bytes, String contentType) {
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .contentType(contentType)
+        BlobId blobId = BlobId.of(bucketName, key);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(contentType)
                 .build();
 
         try {
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
+            storage.create(blobInfo, bytes);
         } catch (Exception e) {
             throw new IllegalStateException("failed to store file to GCP Cloud Storage", e);
         }
@@ -52,16 +49,15 @@ public class GcpCloudStorageService implements FileObjectStorage {
 
     @Override
     public StoredObject get(String key) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
+        BlobId blobId = BlobId.of(bucketName, key);
 
         try {
-            ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(getObjectRequest);
-            byte[] bytes = objectAsBytes.asByteArray();
-            String contentType = objectAsBytes.response().contentType();
-            return new StoredObject(bytes, contentType != null ? contentType : "application/octet-stream");
+            byte[] bytes = storage.readAllBytes(blobId);
+            com.google.cloud.storage.Blob blob = storage.get(blobId);
+            String contentType = (blob != null && blob.getContentType() != null)
+                    ? blob.getContentType()
+                    : "application/octet-stream";
+            return new StoredObject(bytes, contentType);
         } catch (Exception e) {
             throw new ResourceNotFoundException("stored file not found in GCS: key=" + key);
         }
@@ -69,13 +65,10 @@ public class GcpCloudStorageService implements FileObjectStorage {
 
     @Override
     public void delete(String key) {
-        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
+        BlobId blobId = BlobId.of(bucketName, key);
 
         try {
-            s3Client.deleteObject(deleteObjectRequest);
+            storage.delete(blobId);
         } catch (Exception ignored) {
             // best effort cleanup
         }

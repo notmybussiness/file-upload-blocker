@@ -46,6 +46,7 @@ test-results/
 .env
 *.pem
 *secret*.yml
+gcp-credentials.json
 application-*.properties
 application-*.yml
 !application-*.properties.template

@@ -19,5 +19,4 @@ cloud:
   gcp:
     storage:
       bucket: ${GCP_BUCKET_NAME:extension-blocker-storage}
-      endpoint: https://storage.googleapis.com
-      region: us-east1
+      project-id: ${GCP_PROJECT_ID:}
