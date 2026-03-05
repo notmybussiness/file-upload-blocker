@@ -3,9 +3,11 @@ import * as path from 'path';
 
 test('File Upload and Block E2E Scenario', async ({ page, request }) => {
   const filePath = path.join(__dirname, 'fixtures', '서버 개발자 과제.pdf');
+  const upperFilePath = path.join(__dirname, 'fixtures', '서버 개발자 과제_Upper.PDF');
+  const exeFilePath = path.join(__dirname, 'fixtures', 'test.exe');
 
   // Clean up 'pdf' custom extension just in case previous test left it there
-  await test.step('Setup: 기존 pdf 차단 정책 초기화', async () => {
+  await test.step('Setup: 기존 pdf 차단 정책 초기화 및 고정 확장자 체크 해제', async () => {
     // 1. Get current custom extensions
     const response = await request.get('/api/v1/admin/extensions/policy');
     if (response.ok()) {
@@ -14,6 +16,9 @@ test('File Upload and Block E2E Scenario', async ({ page, request }) => {
         if (pdfItem) {
             await request.delete(`/api/v1/admin/extensions/custom/${pdfItem.id}`);
         }
+        
+        // Ensure exe is unchecked
+        await request.patch('/api/v1/admin/extensions/fixed/exe', { data: { checked: false } });
     }
   });
 
@@ -58,5 +63,33 @@ test('File Upload and Block E2E Scenario', async ({ page, request }) => {
     
     // Upload result should be empty (meaning it failed before success)
     await expect(page.locator('#upload-result')).toBeEmpty();
+  });
+
+  await test.step('Client: 대소문자 다른 차단된 파일(PDF) 업로드 실패 검증', async () => {
+    await page.goto('/client/index.html');
+    await page.setInputFiles('#upload-file-input', upperFilePath);
+    await page.click('#upload-btn');
+    
+    // Error message should be populated
+    await expect(page.locator('#error-message')).not.toBeEmpty({ timeout: 10000 });
+  });
+
+  await test.step('Admin: 고정 확장자(exe) 차단 설정', async () => {
+    await page.goto('/admin/index.html');
+    
+    // Check exe fixed extension (using ID defined in UI)
+    const exeCheckbox = page.locator('#fixed-exe');
+    if (!(await exeCheckbox.isChecked())) {
+        await exeCheckbox.check();
+    }
+  });
+
+  await test.step('Client: 고정 확장자(exe)로 차단된 파일 업로드 실패 검증', async () => {
+    await page.goto('/client/index.html');
+    await page.setInputFiles('#upload-file-input', exeFilePath);
+    await page.click('#upload-btn');
+    
+    // Error message should be populated
+    await expect(page.locator('#error-message')).not.toBeEmpty({ timeout: 10000 });
   });
 });
