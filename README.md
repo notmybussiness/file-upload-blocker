@@ -21,11 +21,11 @@
 
 ## 저장소 전략 (MVP 결정)
 
-- 파일 본문: Object Storage (`S3` 기본)
+- 파일 본문: Object Storage (`GCP Cloud Storage`)
 - 파일 메타데이터: `PostgreSQL`
 
 로컬 개발 편의를 위해 `local` 프로파일은 디스크 저장소를 사용하고,
-배포(`postgres` 프로파일)에서는 S3 저장소를 사용하도록 분리했습니다.
+배포(`prod` 프로파일)에서는 GCP Cloud Storage를 사용하도록 분리했습니다.
 
 ## 기술 스택
 
@@ -35,7 +35,7 @@
 - Flyway
 - H2 (local 실행)
 - PostgreSQL (핵심 통합테스트/배포 대상)
-- S3 SDK (배포 저장소)
+- Google Cloud Storage (배포 저장소)
 - Vanilla JS (Client/Admin 2개 정적 페이지)
 
 ## API
@@ -95,16 +95,35 @@
 - PostgreSQL(Testcontainers) 통합테스트
 - 레거시 API 404 검증 테스트
 
-## 배포 환경 (단일 VM + Docker Compose + GCP Storage)
+## CI 파이프라인 (GitHub Actions)
 
-운영계(Production) 배포 시 손쉬운 인프라 프로비저닝을 위해 `docker-compose`를 지원합니다.
-API(백엔드)와 정적 화면(프론트엔드)은 `app` 단일 컨테이너로 실행되며, 데이터베이스는 내장 `postgres` 컨테이너로 띄워 유지보수와 비용을 절감합니다. 반면 "업로드된 파일"과 같은 상태(State) 데이터는 외부 객체 스토리지(`GCP Cloud Storage`)로 연동하여 클라우드 네이티브 원칙을 만족합니다.
+`push` 또는 `PR`이 `main` 브랜치로 올 때 자동 실행됩니다.
+
+| Stage             | 내용                                    |
+| ----------------- | --------------------------------------- |
+| Build & Unit Test | Gradle 빌드 + 단위/슬라이스 테스트 (H2) |
+| Integration Test  | Testcontainers PostgreSQL 통합테스트    |
+
+## 배포 환경 (GCP VM + Docker Compose + Cloud Storage)
+
+- **서버**: GCP Compute Engine (`e2-small`, asia-northeast3)
+- **앱 + DB**: Docker Compose (app + PostgreSQL 컨테이너)
+- **파일 저장소**: GCP Cloud Storage (네이티브 `google-cloud-storage` 라이브러리)
+- **인증**: 서비스 계정 JSON 키 (`GOOGLE_APPLICATION_CREDENTIALS`)
 
 ### 실행 방법
 
-1. GCP 인증 키(`gcp-credentials.json`) 발급 후 프로젝트 루트 디렉토리에 위치시킵니다.
-2. `src/main/resources/application-secret.yml.template`을 참고하여 `application-secret.yml`을 작성 후 DB 패스워드를 기입합니다.
-3. 아래 명령어로 백그라운드 통합 배포를 시작합니다.
+1. GCP 서비스 계정 JSON 키(`gcp-credentials.json`)를 프로젝트 루트에 배치합니다.
+2. `.env` 파일을 생성합니다:
+
+```env
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=<비밀번호>
+GCP_PROJECT_ID=<프로젝트ID>
+GCP_BUCKET_NAME=<버킷이름>
+```
+
+3. 배포:
 
 ```bash
 docker-compose up -d --build
@@ -112,7 +131,7 @@ docker-compose up -d --build
 
 접속:
 
-- 통합 서비스: `http://{서버_외부_IP}:80/client` (기본 80 포트로 매핑됨)
+- 라이브 서비스: `http://34.22.109.226/client`
 
 ## 의도적으로 제외한 범위
 
