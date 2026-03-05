@@ -29,9 +29,8 @@ services:
     image: postgres:15-alpine
     container_name: extension-blocker-db
     environment:
-      # 비밀번호는 application-secret.yml에 있는 값과 동일해야 합니다. (수동 설정 권장)
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=REALLY_SECURE_PASSWORD_HERE
+      - POSTGRES_USER=${POSTGRES_USER:-admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - POSTGRES_DB=extension_blocker
     ports:
       - "5432:5432"
